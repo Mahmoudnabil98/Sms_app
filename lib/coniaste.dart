@@ -1,0 +1,9 @@
+const String tableSms = 'tableSms';
+const String columnId = 'id';
+const String columnAddress = 'address';
+const String columnName = 'email';
+const String columnBody = 'body';
+const String columnRead = 'read';
+const String columnDate = 'date';
+const String columnDateSent = 'dateSent';
+const String columnThreadId = 'threadId';
