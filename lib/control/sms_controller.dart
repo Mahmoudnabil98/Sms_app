@@ -1,37 +1,51 @@
 import 'dart:developer';
-
+import 'package:flutter/material.dart';
+import 'package:flutter_styled_toast/flutter_styled_toast.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sms_advanced/sms_advanced.dart';
 
 class SmSController extends GetxController {
   SmsQuery query = SmsQuery();
+
+  final box = GetStorage();
   var isLoading = false.obs;
   var messages = <SmsMessage>[].obs;
-  SmsMessage? smsMessage;
+  var isloadingSetData = false.obs;
   var switchVlaue = false.obs;
+  var permission = false.obs;
+  PermissionStatus permissionStatus = PermissionStatus.denied;
 
   @override
   void onReady() {
     getInboxSms();
-    // setmySQLData();
+    connectDatabaseValue();
     super.onReady();
-  }
-
-  void toggle() {
-    switchVlaue.value = !switchVlaue.value;
   }
 
   void getInboxSms() async {
     isLoading.value = true;
-    final status = await Permission.sms.status;
-    if (!status.isGranted) {
-      Permission.sms.request();
-    } else if (status.isGranted) {
+    permissionStatus = await Permission.sms.status;
+    if (!permissionStatus.isGranted) {
+      await Permission.sms.request();
+    } else if (permissionStatus.isGranted) {
       messages.value = await query.getAllSms;
     }
     isLoading.value = false;
+    update();
+    refresh();
+  }
+
+  void connectDatabase() async {
+    switchVlaue.value = !switchVlaue.value;
+    await box.write('key', switchVlaue.value);
+  }
+
+  void connectDatabaseValue() {
+    switchVlaue.value = box.read('key') ?? false;
+    log('switchVlaue $switchVlaue.value');
   }
 
   static String host = '154.0.171.145',
@@ -71,19 +85,23 @@ class SmSController extends GetxController {
     return mylist;
   }
 
-  Future<void> setmySQLData() async {
+  Future<void> setmySQLData(BuildContext context) async {
+    isloadingSetData(true);
     var db = getConnection();
-    String sql = 'insert into TblMahmoud (txtSmsText) values (?)';
+    String sql =
+        'insert into TblMahmoud (txtSmsText) values (?) ON DUPLICATE KEY UPDATE txtSmsText=txtSmsText';
+    // String sql = 'insert into TblMahmoud (txtSmsText) values (?)';
     final List<String> mylist = [
-      'test1',
-      'test2',
-      'test3',
+      'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry',
     ];
 
     await db.then((conn) async {
       for (var value in mylist) {
         await conn
-            .query(sql, [value.toString()])
+            .query(
+              sql,
+              [value.toString()],
+            )
             .then((results) {})
             .onError((error, stackTrace) {
               log("error $error");
@@ -93,6 +111,18 @@ class SmSController extends GetxController {
       }
 
       conn.close();
+      showToast(
+        'This is normal toast with animation',
+        context: context,
+        animation: StyledToastAnimation.scale,
+        reverseAnimation: StyledToastAnimation.fade,
+        position: StyledToastPosition.center,
+        animDuration: Duration(seconds: 1),
+        duration: Duration(seconds: 4),
+        curve: Curves.elasticOut,
+        reverseCurve: Curves.linear,
+      );
     });
+    isloadingSetData(false);
   }
 }

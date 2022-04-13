@@ -11,12 +11,21 @@ class DatabaseVew extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: Text(title!),
-      ),
-      body: showFutureDBData(),
-    );
+        appBar: AppBar(
+          titleSpacing: 0,
+          title: Text(title!),
+        ),
+        body: controller.switchVlaue.value == true
+            ? const Center(
+                child: Text(
+                  'Offline in The Database',
+                  style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+              )
+            : showFutureDBData());
   }
 
   showFutureDBData() {
@@ -26,7 +35,7 @@ class DatabaseVew extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         } else if (snapshot.hasError) {
-          return Text(snapshot.error.toString());
+          return Center(child: Text(snapshot.error.toString()));
         }
 
         return ListView.builder(
