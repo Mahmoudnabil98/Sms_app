@@ -1,69 +1,98 @@
+import 'dart:developer';
+
 import 'package:get/get.dart';
+import 'package:mysql1/mysql1.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sms_advanced/sms_advanced.dart';
 
 class SmSController extends GetxController {
   SmsQuery query = SmsQuery();
   var isLoading = false.obs;
-
   var messages = <SmsMessage>[].obs;
-  //var vas = <SmsModel>[].obs;
   SmsMessage? smsMessage;
-  //SmsModel? smsModel;
-
-  List<Map<String, Object?>> maps = [];
-
-  // Map<String, Object?> get toMap {
-  //   Map<String, Object?> data = {};
-  //   if (smsMessage!.address != null) {
-  //     data["address"] = smsMessage!.address;
-  //   }
-  //   if (smsMessage!.body != null) {
-  //     data["body"] = smsMessage!.body;
-  //   }
-  //   if (smsMessage!.id != null) {
-  //     data["id"] = smsMessage!.id;
-  //   }
-  //   if (smsMessage!.threadId != null) {
-  //     data["thread_id"] = smsMessage!.threadId;
-  //   }
-  //   if (smsMessage!.isRead != null) {
-  //     data["read"] = smsMessage!.isRead;
-  //   }
-  //   if (smsMessage!.date != null) {
-  //     data["date"] = smsMessage!.date!.millisecondsSinceEpoch;
-  //   }
-  //   if (smsMessage!.dateSent != null) {
-  //     data["dateSent"] = smsMessage!.dateSent!.millisecondsSinceEpoch;
-  //   }
-  //   return data;
-  // }
+  var switchVlaue = false.obs;
 
   @override
   void onReady() {
     getInboxSms();
+    // setmySQLData();
     super.onReady();
+  }
+
+  void toggle() {
+    switchVlaue.value = !switchVlaue.value;
   }
 
   void getInboxSms() async {
     isLoading.value = true;
-    messages.value = await query.getAllSms;
-    // messages.value.forEach((element) {
-    //   smsMessage = element;
-    //   maps.add(toMap);
-    // });
-    // //saveData(maps);
+    final status = await Permission.sms.status;
+    if (!status.isGranted) {
+      Permission.sms.request();
+    } else if (status.isGranted) {
+      messages.value = await query.getAllSms;
+    }
     isLoading.value = false;
   }
 
-  // void saveData(List<Map<String, Object?>> data) async {
-  //   data.forEach((element) {
-  //     Map map = element;
-  //     smsModel = SmsModel.fomJson(map);
+  static String host = '154.0.171.145',
+      user = 'halvelsv_Dev',
+      password = 'Developer123',
+      db = 'halvelsv_Sms';
+  static int port = 3306;
 
-  //     // log('smsModel ${smsModel}');
-  //   });
-  //   DataBaseHelper.dbHelper.insertSms(smsModel);
-  //   log('smsModel ${smsModel!.date.toString()}');
-  // }
+  Future<MySqlConnection> getConnection() async {
+    var settings = ConnectionSettings(
+        host: host, port: port, user: user, password: password, db: db);
 
+    return await MySqlConnection.connect(settings);
+  }
+
+  Future<List<String>> getmySQLData() async {
+    var db = getConnection();
+    String sql = 'select * from halvelsv_Sms.TblMahmoud;';
+    final List<String> mylist = [];
+    await db.then((conn) async {
+      await conn.query(sql).then((results) {
+        String text = '';
+        log("data ${results.fields}");
+        for (var res in results) {
+          text = res['txtSmsText'].toString();
+          mylist.add(text);
+        }
+      }).onError((error, stackTrace) {
+        print(error);
+
+        return null;
+      });
+
+      conn.close();
+    });
+    log("list {$mylist}");
+    return mylist;
+  }
+
+  Future<void> setmySQLData() async {
+    var db = getConnection();
+    String sql = 'insert into TblMahmoud (txtSmsText) values (?)';
+    final List<String> mylist = [
+      'test1',
+      'test2',
+      'test3',
+    ];
+
+    await db.then((conn) async {
+      for (var value in mylist) {
+        await conn
+            .query(sql, [value.toString()])
+            .then((results) {})
+            .onError((error, stackTrace) {
+              log("error $error");
+
+              return null;
+            });
+      }
+
+      conn.close();
+    });
+  }
 }

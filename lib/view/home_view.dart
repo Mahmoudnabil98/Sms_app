@@ -1,8 +1,9 @@
 import 'dart:developer';
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_app/control/sms_controller.dart';
-import 'package:flutter_sms_app/view/Details_Sms_View.dart';
+import 'package:flutter_sms_app/view/database_view.dart';
+import 'package:flutter_sms_app/widget/drawer.dart';
 import 'package:get/get.dart';
 
 class HomeView extends StatelessWidget {
@@ -10,10 +11,54 @@ class HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    log(' controller ${controller.messages.length}');
     return Scaffold(
+      drawer: CustomDrawer(),
       appBar: AppBar(
         title: const Text('Inbox Sms'),
+        actions: [
+          Obx(() {
+            return Row(
+              children: [
+                Text(
+                  controller.switchVlaue.value == false ? 'disable' : 'enabile',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
+                ),
+                Switch(
+                    activeColor: Colors.white,
+                    hoverColor: Colors.white,
+                    value: controller.switchVlaue.value,
+                    onChanged: (newValue) {
+                      controller.toggle();
+                    }),
+              ],
+            );
+          }),
+          TextButton(
+              onPressed: () {
+                Get.to(() => DatabaseVew(
+                      title: 'Database',
+                    ));
+              },
+              child: const Text(
+                'Database',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              )),
+          TextButton(
+              onPressed: () => exit(0),
+              child: const Text(
+                'Exit',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
+              ))
+        ],
       ),
       body: Obx(() {
         return controller.isLoading.value
@@ -30,10 +75,14 @@ class HomeView extends StatelessWidget {
                     padding: const EdgeInsets.all(8.0),
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (context) => DetailsSmsView(
-                                text: controller.messages[index].body
-                                    .toString())));
+                        showDialog(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                                  title: Text(controller.messages[index].address
+                                      .toString()),
+                                  content: Text(controller.messages[index].body
+                                      .toString()),
+                                ));
                       },
                       child: ListTile(
                         leading: const Icon(
