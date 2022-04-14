@@ -1,14 +1,14 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_app/control/sms_controller.dart';
 import 'package:flutter_sms_app/widget/drawer.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+// ignore: must_be_immutable
 class HomeView extends StatelessWidget {
   SmSController controller = Get.put(SmSController());
-
+  HomeView({Key? key}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,12 +40,11 @@ class HomeView extends StatelessWidget {
                             ),
                             ElevatedButton(
                                 onPressed: () async {
-                                  // await Permission.sms.request().then((value) {
-                                  //   controller.getInboxSms();
-                                  // }).catchError((onError) {
-                                  //   log("Error");
-                                  // });
-                                  //
+                                  await Permission.sms.request().then((value) {
+                                    controller.getInboxSms();
+                                  }).catchError((onError) {
+                                    log("Error");
+                                  });
                                 },
                                 child: const Text(
                                   "refrech",

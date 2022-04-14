@@ -1,6 +1,4 @@
-import 'dart:developer';
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_sms_app/control/sms_controller.dart';
 import 'package:flutter_sms_app/view/database_view.dart';
@@ -27,8 +25,8 @@ class CustomDrawer extends StatelessWidget {
           ),
           // ignore: unrelated_type_equality_checks
           Obx(() => controller.isloadingSetData == true
-              ? LinearProgressIndicator()
-              : SizedBox()),
+              ? const LinearProgressIndicator()
+              : const SizedBox()),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -60,7 +58,6 @@ class CustomDrawer extends StatelessWidget {
                 GestureDetector(
                   onTap: () {
                     if (controller.switchVlaue.value == true) {
-                      log("${controller.switchVlaue.value}");
                       showToast(
                         'Offline in the database',
                         context: context,

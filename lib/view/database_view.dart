@@ -43,8 +43,10 @@ class DatabaseVew extends StatelessWidget {
           itemBuilder: (context, index) {
             final user = snapshot.data![index];
 
-            return ListTile(
-              title: Text(user),
+            return Card(
+              child: ListTile(
+                title: Text(user),
+              ),
             );
           },
         );
