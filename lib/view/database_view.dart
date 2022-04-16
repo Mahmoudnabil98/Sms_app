@@ -39,10 +39,9 @@ class DatabaseVew extends StatelessWidget {
         }
 
         return ListView.builder(
-          itemCount: snapshot.data!.length,
+          itemCount: snapshot.data!.reversed.length,
           itemBuilder: (context, index) {
             final user = snapshot.data![index];
-
             return Card(
               child: ListTile(
                 title: Text(user),

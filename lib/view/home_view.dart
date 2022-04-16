@@ -82,20 +82,26 @@ class HomeView extends StatelessWidget {
                                 title: Text(controller.messages[index].address
                                     .toString()),
                                 subtitle: Text(
-                                  controller.messages[index].isRead
-                                              .toString() ==
-                                          'true'
+                                  controller.isReadMessage(controller
+                                              .messages[index].isRead
+                                              .toString()) ==
+                                          true
                                       ? 'Read Message'
                                       : 'Unread Message',
                                   maxLines: 2,
                                   style: TextStyle(
-                                    color: controller.messages[index].isRead
-                                                .toString() ==
-                                            'false'
+                                    color: controller.isReadMessage(controller
+                                                .messages[index].isRead
+                                                .toString()) ==
+                                            false
                                         ? Colors.redAccent
                                         : Colors.green,
                                   ),
                                 ),
+                                trailing: Text(controller
+                                    .messages[index].dateSent
+                                    .toString()
+                                    .substring(0, 16)),
                               ),
                             ),
                           );
