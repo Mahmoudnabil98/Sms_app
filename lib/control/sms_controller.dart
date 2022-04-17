@@ -6,9 +6,11 @@ import 'package:get_storage/get_storage.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sms_advanced/sms_advanced.dart';
+import 'package:telephony/telephony.dart' as tel;
 
 class SmSController extends GetxController {
   SmsQuery query = SmsQuery();
+  tel.Telephony? telephony;
 
   final box = GetStorage();
   var isLoading = false.obs;
@@ -39,6 +41,19 @@ class SmSController extends GetxController {
     connectDatabaseValue();
     super.onReady();
   }
+
+  // void print() async {
+  //   List<String> result = [];
+  //   await Future.delayed(const Duration(seconds: 2), () {});
+  //   messages.removeWhere((e) => mylist.contains(e.body));
+  //   for (var v in messages) {
+  //     result.addAll([
+  //       "Address: ${v.address.toString()} | Body: ${v.body.toString()}| DateTime ${v.dateSent.toString()}"
+  //     ]);
+  //   }
+
+  //   log("result $result");
+  // }
 
   Future<void> getInboxSms() async {
     isLoading.value = true;
@@ -108,7 +123,7 @@ class SmSController extends GetxController {
           mylist.add(text);
         }
       }).onError((error, stackTrace) {
-        print(error);
+        log(" error ${error}");
 
         return null;
       });
@@ -135,14 +150,19 @@ class SmSController extends GetxController {
       curve: Curves.elasticOut,
       reverseCurve: Curves.linear,
     );
-    await Future.delayed(const Duration(seconds: 1), () {
-      test.removeWhere((e) => mylist.contains(e));
+    List<String> result = [];
+    await Future.delayed(const Duration(seconds: 2), () {
+      messages.removeWhere((e) => mylist.contains(e.body));
+
+      for (var v in messages) {
+        result.addAll([
+          "Address: ${v.address.toString()} | Body: ${v.body.toString()}| DateTime ${v.dateSent.toString()}"
+        ]);
+      }
     });
-    List<String> result = test;
-    log("result $result");
     if (result.isNotEmpty || result.length > 0) {
       await db.then((conn) async {
-        for (var value in test) {
+        for (var value in result) {
           await conn.transaction((db) async {
             return await db.query(
               sql, [value],
