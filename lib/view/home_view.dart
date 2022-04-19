@@ -90,9 +90,8 @@ class HomeView extends StatelessWidget {
                                       : 'Unread Message',
                                   maxLines: 2,
                                   style: TextStyle(
-                                      color: controller.isReadMessage(controller
-                                                  .messages[index].body
-                                                  .toString()) ==
+                                      color: controller.isReadMessage(
+                                                  "Address: ${controller.messages[index].address.toString()} | Body: ${controller.messages[index].body.toString()}| DateTime ${controller.messages[index].dateSent.toString()}") ==
                                               true
                                           ? Colors.green
                                           : Colors.redAccent),

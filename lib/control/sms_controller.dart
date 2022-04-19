@@ -152,7 +152,8 @@ class SmSController extends GetxController {
     );
     List<String> result = [];
     await Future.delayed(const Duration(seconds: 2), () {
-      messages.removeWhere((e) => mylist.contains(e.body));
+      messages.removeWhere((e) => mylist.contains(
+          "Address: ${e.address.toString()} | Body: ${e.body.toString()}| DateTime ${e.dateSent.toString()}"));
 
       for (var v in messages) {
         result.addAll([
