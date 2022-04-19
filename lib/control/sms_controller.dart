@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_styled_toast/flutter_styled_toast.dart';
@@ -20,56 +21,47 @@ class SmSController extends GetxController {
   var mylist = <String>[].obs;
   var isloadingSetData = false.obs;
   var switchVlaue = false.obs;
-  var permission = false.obs;
+  var permissioncheck = false.obs;
+  static String sqlInsert =
+      'insert into TblMahmoud (txtSmsText) values (?) ON DUPLICATE KEY UPDATE txtSmsText=txtSmsText';
+  static String sql = 'select * from halvelsv_Sms.TblMahmoud;';
 
-  PermissionStatus permissionStatus = PermissionStatus.denied;
-  List<String> test = [
-    "Lorem Ipsum is simply 0",
-    "Lorem Ipsum is simply 1",
-    "Lorem Ipsum is simply 1000",
-    "Lorem Ipsum is simply 3000",
-    "Lorem Ipsum is simply 7",
-    "Lorem Ipsum is simply 5000",
-    "Lorem Ipsum is simply 2000",
-    "Lorem Ipsum is simply 1",
-    "Lorem Ipsum is simply 9",
-  ];
+  Rx<PermissionStatus> permissionStatus = (PermissionStatus.limited).obs;
   @override
-  void onReady() {
-    getInboxSms();
+  void onInit() {
     getmySQLData();
     connectDatabaseValue();
-    super.onReady();
+    checkPermission();
+    super.onInit();
   }
 
-  // void print() async {
-  //   List<String> result = [];
-  //   await Future.delayed(const Duration(seconds: 2), () {});
-  //   messages.removeWhere((e) => mylist.contains(e.body));
-  //   for (var v in messages) {
-  //     result.addAll([
-  //       "Address: ${v.address.toString()} | Body: ${v.body.toString()}| DateTime ${v.dateSent.toString()}"
-  //     ]);
-  //   }
+  Future<void> checkPermission() async {
+    permissionStatus.value = await Permission.sms.request();
+    if (permissionStatus.value.isGranted) {
+      getInboxSms();
+    } else if (permissionStatus.value.isPermanentlyDenied) {
+      openAppSettings();
+      Get.snackbar(
+        "Setting access",
+        "You must grant access to a message box",
+        icon: const Icon(Icons.error, color: Colors.redAccent),
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.white,
+      );
+    } else if (permissionStatus.value.isDenied) {
+      permissionStatus.value = await Permission.sms.request();
+    }
 
-  //   log("result $result");
-  // }
+    listeners;
+  }
 
   Future<void> getInboxSms() async {
-    isLoading.value = true;
-    permissionStatus = await Permission.sms.status;
-    if (!permissionStatus.isGranted) {
-      Future.delayed(const Duration(seconds: 2), () async {
-        await Permission.sms.request();
-      });
-    } else if (permissionStatus.isGranted) {
-      await Permission.sms.request();
-      messages.value = await query.querySms(kinds: [SmsQueryKind.Inbox]);
-      messagesIsRead();
-    }
-    isLoading.value = false;
+    await Permission.sms.request().then((value) {
+      permissionStatus.value = value;
+    });
+    messages.value = await query.querySms(kinds: [SmsQueryKind.Inbox]);
+    listeners;
     update();
-    refresh();
   }
 
   void connectDatabase() async {
@@ -79,20 +71,20 @@ class SmSController extends GetxController {
 
   void connectDatabaseValue() {
     switchVlaue.value = box.read('key') ?? false;
-    log('switchVlaue $switchVlaue.value');
   }
 
   void messagesIsRead() {
     insertSqlData.value = [];
     for (var value in messages) {
       insertSqlData.addAll([
-        "Address: ${value.address.toString()} , Body: ${value.body.toString()} , DateTime: ${value.toString().substring(0, 16)}"
+        "Address: ${value.address.toString()} | Body: ${value.body.toString()} | DateTime: ${value.dateSent.toString()}"
       ]);
     }
   }
 
   bool? isReadMessage(String data) {
-    bool result = mylist.contains(data);
+    bool result = mylist.contains(data.toString());
+    log("mylist $mylist");
     return result;
   }
 
@@ -111,7 +103,6 @@ class SmSController extends GetxController {
 
   Future<List<String>> getmySQLData() async {
     var db = getConnection();
-    String sql = 'select * from halvelsv_Sms.TblMahmoud;';
 
     await db.then((conn) async {
       await conn.query(sql).then((results) {
@@ -123,7 +114,13 @@ class SmSController extends GetxController {
           mylist.add(text);
         }
       }).onError((error, stackTrace) {
-        log(" error ${error}");
+        Get.snackbar(
+          "Connection timed",
+          "$error",
+          icon: const Icon(Icons.error, color: Colors.redAccent),
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.white,
+        );
 
         return null;
       });
@@ -136,8 +133,7 @@ class SmSController extends GetxController {
   Future<void> setmySQLData(BuildContext context) async {
     isloadingSetData(true);
     var db = getConnection();
-    String sql =
-        'insert into TblMahmoud (txtSmsText) values (?) ON DUPLICATE KEY UPDATE txtSmsText=txtSmsText';
+
     showToast(
       'The process may take some time',
       context: context,
@@ -153,11 +149,11 @@ class SmSController extends GetxController {
     List<String> result = [];
     await Future.delayed(const Duration(seconds: 2), () {
       messages.removeWhere((e) => mylist.contains(
-          "Address: ${e.address.toString()} | Body: ${e.body.toString()}| DateTime ${e.dateSent.toString()}"));
+          "Address: ${e.address.toString()} | Body: ${e.body.toString()} | DateTime: ${e.dateSent.toString()}"));
 
       for (var v in messages) {
         result.addAll([
-          "Address: ${v.address.toString()} | Body: ${v.body.toString()}| DateTime ${v.dateSent.toString()}"
+          "Address: ${v.address.toString()} | Body: ${v.body.toString()} | DateTime: ${v.dateSent.toString()}"
         ]);
       }
     });
@@ -166,8 +162,8 @@ class SmSController extends GetxController {
         for (var value in result) {
           await conn.transaction((db) async {
             return await db.query(
-              sql, [value],
-              //insertSqlData
+              sqlInsert,
+              [value],
             );
           });
         }
@@ -187,7 +183,7 @@ class SmSController extends GetxController {
         );
       }).catchError((onError) {
         showToast(
-          'onError',
+          '$onError',
           context: context,
           animation: StyledToastAnimation.scale,
           backgroundColor: Colors.blueAccent,
@@ -202,5 +198,17 @@ class SmSController extends GetxController {
     }
 
     isloadingSetData(false);
+  }
+
+  Future<void> insertSmsInBackground({tel.SmsMessage? message}) async {
+    var db = getConnection();
+
+    db.then((value) async {
+      if (message != null) {
+        value.query(sqlInsert, [
+          "Address: ${message.address.toString()} | Body: ${message.body.toString()} | DateTime: ${DateTime.now().toString().substring(0, 16)}"
+        ]);
+      }
+    });
   }
 }

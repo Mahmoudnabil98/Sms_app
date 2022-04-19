@@ -1,14 +1,14 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:flutter_sms_app/control/sms_controller.dart';
 import 'package:flutter_sms_app/view/home_view.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:telephony/telephony.dart';
 
 backgrounMessageHandler(SmsMessage? message) async {
-  log("message1");
-
-  log("message1  ${message!.body.toString()}");
+  SmSController smSController = Get.put(SmSController());
+  smSController.insertSmsInBackground(message: message!);
 }
 
 void main() async {

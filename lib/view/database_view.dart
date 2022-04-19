@@ -7,7 +7,6 @@ import '../control/sms_controller.dart';
 
 class DatabaseVew extends StatelessWidget {
   String? title;
-
   SmSController controller = Get.find();
   DatabaseVew({Key? key, required this.title}) : super(key: key);
   @override
